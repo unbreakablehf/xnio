@@ -31,7 +31,7 @@
     <parent>
         <groupId>org.jboss.xnio</groupId>
         <artifactId>xnio-all</artifactId>
-        <version>3.5.2.Final-SNAPSHOT</version>
+        <version>3.7.0.Beta1-SNAPSHOT</version>
     </parent>
     
     <properties>
@@ -158,6 +158,7 @@
                     </systemProperties>
                     <enableAssertions>true</enableAssertions>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                    <trimStackTrace>false</trimStackTrace>
                 </configuration>
             </plugin>
             <plugin>
