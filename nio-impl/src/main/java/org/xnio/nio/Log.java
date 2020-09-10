@@ -47,6 +47,7 @@ interface Log extends BasicLogger {
     Log socketLog = Logger.getMessageLogger(Log.class, "org.xnio.nio.socket");
     Log selectorLog = Logger.getMessageLogger(Log.class, "org.xnio.nio.selector");
     Log tcpServerLog = Logger.getMessageLogger(Log.class, "org.xnio.nio.tcp.server");
+    Log tcpServerConnectionLimitLog = Logger.getMessageLogger(Log.class, "org.xnio.nio.tcp.server.connection-limit");
     Log udpServerChannelLog = Logger.getMessageLogger(Log.class, "org.xnio.nio.udp.server.channel");
 
     // Greeting
@@ -124,6 +125,10 @@ interface Log extends BasicLogger {
     @LogMessage(level = WARN)
     @Message(id = 8000, value = "Received an I/O error on selection: %s")
     void selectionError(IOException e);
+
+    @LogMessage(level = WARN)
+    @Message(id = 8001, value = "Socket accept failed, backing off for %2$d milliseconds: %1$s")
+    void acceptFailed(IOException problem, int backOffTime);
 
     // Trace
 

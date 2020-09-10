@@ -31,7 +31,7 @@
     <parent>
         <groupId>org.jboss.xnio</groupId>
         <artifactId>xnio-all</artifactId>
-        <version>3.8.0.Beta1-SNAPSHOT</version>
+        <version>3.9.0.Beta1-SNAPSHOT</version>
     </parent>
     
     <properties>
@@ -40,6 +40,7 @@
         <xnio.nio.selector.main/>
         <xnio.nio.selector.temp/>
         <xnio.nio.selector.provider/>
+        <xnio.nio.alt-queued-server>true</xnio.nio.alt-queued-server>
     </properties>
 
     <dependencies>
@@ -155,10 +156,15 @@
                             <name>org.xnio.ssl.new</name>
                             <value>${org.xnio.ssl.new}</value>
                         </property>
+                        <property>
+                            <name>xnio.nio.alt-queued-server</name>
+                            <value>${xnio.nio.alt-queued-server}</value>
+                        </property>
                     </systemProperties>
                     <enableAssertions>true</enableAssertions>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <trimStackTrace>false</trimStackTrace>
+                    <reuseForks>false</reuseForks>
                 </configuration>
             </plugin>
             <plugin>

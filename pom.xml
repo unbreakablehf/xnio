@@ -25,14 +25,14 @@
     <parent>
         <groupId>org.jboss</groupId>
         <artifactId>jboss-parent</artifactId>
-        <version>20</version>
+        <version>35</version>
     </parent>
 
     <groupId>org.jboss.xnio</groupId>
     <artifactId>xnio-all</artifactId>
     <packaging>pom</packaging>
     <name>XNIO Parent POM</name>
-    <version>3.8.0.Beta1-SNAPSHOT</version>
+    <version>3.9.0.Beta1-SNAPSHOT</version>
     <description>The aggregator POM of the XNIO project</description>
 
     <licenses>
@@ -49,16 +49,16 @@
     </modules>
 
     <properties>
-        <byteman-version>4.0.6</byteman-version>
-        <version.org.jboss.logging.jboss-logging>3.4.0.Final</version.org.jboss.logging.jboss-logging>
-        <version.org.jboss.logging.jboss-logging-tools>2.2.0.Final</version.org.jboss.logging.jboss-logging-tools>
-        <version.org.jboss.logmanager.jboss-logmanager>2.1.10.Final</version.org.jboss.logmanager.jboss-logmanager>
-        <version.org.jboss.threads>2.3.0.Beta2</version.org.jboss.threads>
-        <version.org.wildfly.common>1.3.0.Final</version.org.wildfly.common>
-        <version.org.wildfly.client-config>1.0.0.Final</version.org.wildfly.client-config>
-        <version.bridger.plugin>1.1.Final</version.bridger.plugin>
-        <version.junit>4.11</version.junit>
-        <version.jmock>2.6.0</version.jmock>
+        <byteman-version>4.0.8</byteman-version>
+        <version.org.jboss.logging.jboss-logging>3.4.1.Final</version.org.jboss.logging.jboss-logging>
+        <version.org.jboss.logging.jboss-logging-tools>2.2.1.Final</version.org.jboss.logging.jboss-logging-tools>
+        <version.org.jboss.logmanager.jboss-logmanager>2.1.14.Final</version.org.jboss.logmanager.jboss-logmanager>
+        <version.org.jboss.threads>2.3.3.Final</version.org.jboss.threads>
+        <version.org.wildfly.common>1.5.2.Final</version.org.wildfly.common>
+        <version.org.wildfly.client-config>1.0.1.Final</version.org.wildfly.client-config>
+        <version.bridger.plugin>1.5.Final</version.bridger.plugin>
+        <version.junit>4.12</version.junit>
+        <version.jmock>2.12.0</version.jmock>
         <org.xnio.ssl.new>false</org.xnio.ssl.new>
 
         <version.org.osgi.core>6.0.0</version.org.osgi.core>

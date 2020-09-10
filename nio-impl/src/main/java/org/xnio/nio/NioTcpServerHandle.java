@@ -19,16 +19,26 @@
 package org.xnio.nio;
 
 import java.nio.channels.SelectionKey;
+import java.util.concurrent.TimeUnit;
+
 import org.xnio.ChannelListeners;
 
+import static java.lang.Math.min;
+import static java.lang.Math.max;
 import static java.lang.Thread.currentThread;
+
+import org.jboss.logging.Logger;
+
 import static org.xnio.IoUtils.safeClose;
+import static org.xnio.nio.Log.tcpServerConnectionLimitLog;
+import static org.xnio.nio.Log.tcpServerLog;
 
 /**
 * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
 */
 final class NioTcpServerHandle extends NioHandle implements ChannelClosed {
 
+    private static final String FQCN = NioTcpServerHandle.class.getName();
     private final Runnable freeTask;
     private final NioTcpServer server;
     private int count;
@@ -36,6 +46,8 @@ final class NioTcpServerHandle extends NioHandle implements ChannelClosed {
     private int high;
     private int tokenCount = -1;
     private boolean stopped;
+    private boolean backOff;
+    private int backOffTime = 0;
 
     NioTcpServerHandle(final NioTcpServer server, final SelectionKey key, final WorkerThread thread, final int low, final int high) {
         super(thread, key);
@@ -68,7 +80,7 @@ final class NioTcpServerHandle extends NioHandle implements ChannelClosed {
     void resume() {
         final WorkerThread thread = getWorkerThread();
         if (thread == currentThread()) {
-            if (! stopped && server.resumed) super.resume(SelectionKey.OP_ACCEPT);
+            if (! stopped && ! backOff && server.resumed) super.resume(SelectionKey.OP_ACCEPT);
         } else {
             thread.execute(new Runnable() {
                 public void run() {
@@ -81,7 +93,7 @@ final class NioTcpServerHandle extends NioHandle implements ChannelClosed {
     void suspend() {
         final WorkerThread thread = getWorkerThread();
         if (thread == currentThread()) {
-            if (stopped || ! server.resumed) super.suspend(SelectionKey.OP_ACCEPT);
+            if (stopped || backOff || ! server.resumed) super.suspend(SelectionKey.OP_ACCEPT);
         } else {
             thread.execute(new Runnable() {
                 public void run() {
@@ -103,8 +115,12 @@ final class NioTcpServerHandle extends NioHandle implements ChannelClosed {
     void freeConnection() {
         assert currentThread() == getWorkerThread();
         if (count-- <= low && tokenCount != 0 && stopped) {
+            tcpServerConnectionLimitLog.logf(FQCN, Logger.Level.DEBUG, null,
+                    "Connection freed, resuming accept connections");
             stopped = false;
             if (server.resumed) {
+                // end backoff optimistically
+                backOff = false;
                 super.resume(SelectionKey.OP_ACCEPT);
             }
         }
@@ -117,7 +133,7 @@ final class NioTcpServerHandle extends NioHandle implements ChannelClosed {
                 tokenCount = newCount;
                 if (count <= low && stopped) {
                     stopped = false;
-                    if (server.resumed) {
+                    if (server.resumed && ! backOff) {
                         super.resume(SelectionKey.OP_ACCEPT);
                     }
                 }
@@ -126,6 +142,31 @@ final class NioTcpServerHandle extends NioHandle implements ChannelClosed {
             workerThread = workerThread.getNextThread();
         }
         setThreadNewCount(workerThread, newCount);
+    }
+
+    /**
+     * Start back-off, when an accept produces an exception.
+     */
+    void startBackOff() {
+        backOff = true;
+        backOffTime = max(250, min(30_000, backOffTime << 2));
+        suspend();
+        getWorkerThread().executeAfter(this::endBackOff, backOffTime, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * End back-off, when an accept may be retried.
+     */
+    void endBackOff() {
+        backOff = false;
+        resume();
+    }
+
+    /**
+     * Reset back-off, when an accept has succeeded.
+     */
+    void resetBackOff() {
+        backOffTime = 0;
     }
 
     private void setThreadNewCount(final WorkerThread workerThread, final int newCount) {
@@ -157,13 +198,18 @@ final class NioTcpServerHandle extends NioHandle implements ChannelClosed {
 
     boolean getConnection() {
         assert currentThread() == getWorkerThread();
-        if (stopped) {
+        if (stopped || backOff) {
+            tcpServerConnectionLimitLog.logf(FQCN, Logger.Level.DEBUG, null, "Refusing accepting request (temporarily stopped: %s, backed off: %s)", stopped, backOff);
             return false;
         }
         if (tokenCount != -1 && --tokenCount == 0) {
             setThreadNewCount(getWorkerThread().getNextThread(), server.getTokenConnectionCount());
         }
         if (++count >= high || tokenCount == 0) {
+            if (tcpServerLog.isDebugEnabled() && count >= high)
+                tcpServerConnectionLimitLog.logf(FQCN, Logger.Level.DEBUG, null,
+                            "Total open connections reach high water limit (%s) by this new accepting request. Temporarily stopping accept connections",
+                            high);
             stopped = true;
             super.suspend(SelectionKey.OP_ACCEPT);
         }
@@ -180,7 +226,7 @@ final class NioTcpServerHandle extends NioHandle implements ChannelClosed {
                 suspend();
             } else if (count <= low && stopped) {
                 stopped = false;
-                if (server.resumed) resume();
+                if (server.resumed && ! backOff) resume();
             }
         } else {
             thread.execute(new Runnable() {
@@ -194,5 +240,9 @@ final class NioTcpServerHandle extends NioHandle implements ChannelClosed {
     int getConnectionCount() {
         assert currentThread() == getWorkerThread();
         return count;
+    }
+
+    int getBackOffTime() {
+        return backOffTime;
     }
 }

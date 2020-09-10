@@ -180,12 +180,12 @@ final class NioXnioWorker extends XnioWorker {
                 channel.socket().bind(bindAddress);
             }
             if (false) {
-                final NioTcpServer server = new NioTcpServer(this, channel, optionMap);
+                final NioTcpServer server = new NioTcpServer(this, channel, optionMap, false);
                 server.setAcceptListener(acceptListener);
                 ok = true;
                 return server;
             } else {
-                final QueuedNioTcpServer server = new QueuedNioTcpServer(this, channel, optionMap);
+                final QueuedNioTcpServer2 server = new QueuedNioTcpServer2(new NioTcpServer(this, channel, optionMap, true));
                 server.setAcceptListener(acceptListener);
                 ok = true;
                 return server;
