@@ -202,7 +202,7 @@ public final class Conduits {
             if (count == 0L) return total;
             if (NULL_FILE_CHANNEL != null) {
                 while (count > 0) {
-                    if ((lres = conduit.transferTo(0, count, NULL_FILE_CHANNEL)) == 0L) {
+                    if ((lres = conduit.transferTo(0, count, NULL_FILE_CHANNEL)) <= 0L) {
                         break;
                     }
                     total += lres;
@@ -229,7 +229,7 @@ public final class Conduits {
                 final String osName = System.getProperty("os.name", "unknown").toLowerCase(Locale.US);
                 try {
                     if (osName.contains("windows")) {
-                        return new FileOutputStream("NUL:").getChannel();
+                        return new FileOutputStream("NUL").getChannel();
                     } else {
                         return new FileOutputStream("/dev/null").getChannel();
                     }
